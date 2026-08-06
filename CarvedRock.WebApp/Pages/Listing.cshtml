@@ -35,7 +35,7 @@
 
     async function fetchProductsByCategory() {
         try {
-            const response = await fetch('{@Model.ApiBaseUrl}/Product?category=boots');
+            const response = await fetch('https://localhost:7213/Product?category=boots');
             if (!response.ok) {
                 throw new Error('Network response was not ok ' + response.statusText);
             }
@@ -47,7 +47,7 @@
     }
 
     $(document).ready(function () {
-        var delay = 2000;
+        var delay = 7000;
         setTimeout(function () {
             $("#content-with-delay").html("This content was delayed by " + delay + " milliseconds");
         }, delay);
