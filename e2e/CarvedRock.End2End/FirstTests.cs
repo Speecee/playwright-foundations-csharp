@@ -17,7 +17,7 @@ namespace CarvedRock.End2End
         [SetUp]
         public void Setup()
         {
-            TestContext.Out.WriteLine($"Useing base url: {_baseUrl}");
+            TestContext.Out.WriteLine($"Using base url: {_baseUrl}");
         }
 
 
@@ -74,7 +74,6 @@ namespace CarvedRock.End2End
             await addCoastLiner.ClickAsync();
             await addCoastLiner.ClickAsync();
 
-
             await Page.GetByRole(AriaRole.Link, new() { NameString = "Cart" }).ClickAsync();
             await Page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).FillAsync(user.Username);
             await Page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).PressAsync("Tab");
@@ -95,7 +94,7 @@ namespace CarvedRock.End2End
             await Expect(TrailblazerRow).ToBeVisibleAsync();
             await Expect(TrailblazerRow).ToHaveCountAsync(1);
 
-
+          
 
             var cellValue = CoastlinerRow.Locator("td").Nth(3);
             await Expect(cellValue).ToContainTextAsync("2");

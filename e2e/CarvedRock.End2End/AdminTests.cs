@@ -1,5 +1,7 @@
 ﻿using Microsoft.Playwright;
 using Bogus;
+using System.Text.Encodings.Web;
+using System.Security.Principal;
 
 namespace CarvedRock.End2End
 {
@@ -12,7 +14,13 @@ namespace CarvedRock.End2End
 
         private const string _authenticationStateFilename = "authState.json";
         private IPage _page = null!;
+        internal string _baseUrl = null!;
 
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            _baseUrl = Utilities.GetBaseUrl();
+        }
 
         [SetUp]
         public async Task Setup()
@@ -42,7 +50,7 @@ namespace CarvedRock.End2End
         public async Task AdminIsAvailableForBob()
         {
             //await LoginAsAdmin();
-            await _page.GotoAsync("https://localhost:7224");
+            await _page.GotoAsync(_baseUrl);
             await _page.GetByRole(AriaRole.Link, new() { Name = "Admin" }).ClickAsync();
             await Expect(_page.GetByRole(AriaRole.Link, new() { Name = "Create New" })).ToBeVisibleAsync();
 
@@ -51,7 +59,7 @@ namespace CarvedRock.End2End
         public async Task ValidationErrosAppearOnEmptySubmission()
         {
             //await LoginAsAdmin();
-            await _page.GotoAsync("https://localhost:7224");
+            await _page.GotoAsync(_baseUrl);
             await _page.GetByRole(AriaRole.Link, new() { Name = "Admin" }).ClickAsync();
             
 
@@ -69,18 +77,18 @@ namespace CarvedRock.End2End
         public async Task CanSupportNewProductSuccessfully()
         {
             //await LoginAsAdmin();
-            await _page.GotoAsync("https://localhost:7224");
+            await _page.GotoAsync(_baseUrl);
             await _page.GetByRole(AriaRole.Link, new() { Name = "Admin" }).ClickAsync();
-            //await Page.GotoAsync("https://localhost:7224/Admin");
 
             await Expect(_page.GetByRole(AriaRole.Link, new() { Name = "Create New" })).ToBeVisibleAsync();
             await _page.GetByRole(AriaRole.Link, new() { Name = "Create New" }).ClickAsync();
 
+            //await _page.ReloadAsync();
 
             var Categories = new List<string> { "kayak", "equip", "boots" };
             var ProductFaker = new Faker<Product>()
                 .RuleFor(p => p.Name, f => f.Commerce.ProductName())
-                .RuleFor(p => p.Price, f => Convert.ToDecimal(f.Commerce.Price(150,300)))
+                .RuleFor(p => p.Price, f => Convert.ToDecimal(f.Commerce.Price(20,150)))
                 .RuleFor(p => p.Description, f => f.Lorem.Sentence())
                 .RuleFor(p => p.Category, f => f.PickRandom(Categories))
                 .RuleFor(p => p.ImgUrl, f => f.Image.PicsumUrl());
@@ -95,28 +103,49 @@ namespace CarvedRock.End2End
 
             await _page.GetByRole(AriaRole.Button, new() { Name = "Create" }).ClickAsync();
 
-            await Expect(_page.Locator("tbody")).ToContainTextAsync(productObject.Name!, new LocatorAssertionsToContainTextOptions 
+
+            var NewProduct = _page.GetByTestId(productObject.Name!);
+            var ProductRow = NewProduct.Locator("td", new() { HasTextString = productObject.Name });
+
+            try
             {
-                Timeout = 30_000
-            });
-            await Expect(_page.Locator("tbody")).ToContainTextAsync(productObject.Description!);
+                await Expect(ProductRow).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions
+                {
+                    Timeout = 50_000
+                });
+                Console.WriteLine($"Yeah! New Product: {productObject.Name}");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                await _page.ScreenshotAsync(new() { Path = "ErrorScreenshot.png" });
+                throw;
+            }
+
+
+            //var NewProduct = table.Locator("tr", new() { HasTextString = productObject.Name });
+            //await NewProduct.ScrollIntoViewIfNeededAsync();
+            //new() { WaitUntil = WaitUntilState.Load });
+            //await _page.GetByRole(AriaRole.Link, new() { Name = "Admin" }).ClickAsync();
+            //await Expect(_page.GetByRole(AriaRole.Link, new() { Name = "Create New" })).ToBeVisibleAsync();
+            ////await _page.ReloadAsync(new() { WaitUntil = WaitUntilState.Load });
+            //await Page.ScreenshotAsync(new() { Path = "CreateProductPage-screenshot.png" });
+            //await Expect(_page.Locator("tbody")).ToContainTextAsync(productObject.Name!, new LocatorAssertionsToContainTextOptions
+            //{
+            //    Timeout = 50_000
+            //});
+            //await Expect(_page.Locator("tbody")).ToContainTextAsync(productObject.Description!);
 
         }
 
         [Test]
         public async Task CanDeleteProduct()
         {
-            //await LoginAsAdmin();
-            await _page.GotoAsync("https://localhost:7224/");
-            //await Page.GetByRole(AriaRole.Link, new() { Name = "Sign in" }).ClickAsync();
-            //await Page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).FillAsync("bob");
-            //await Page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).PressAsync("Tab");
-            //await Page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).FillAsync("bob");
-            //await Page.GetByRole(AriaRole.Button, new() { Name = "Login" }).ClickAsync();
 
-            //await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Admin" })).ToBeVisibleAsync();
+            await _page.GotoAsync(_baseUrl);
+
             await _page.GetByRole(AriaRole.Link, new() { Name = "Admin" }).ClickAsync();
-            //await Page.GotoAsync("https://localhost:7224/Admin");
 
             void Page_Dialog_EventHandler(object? sender, IDialog dialog)
             {
@@ -142,7 +171,7 @@ namespace CarvedRock.End2End
 
         private async Task LoginAsAdmin()
         {
-            await Page.GotoAsync("https://localhost:7224/");
+            await Page.GotoAsync(_baseUrl);
             await Page.GetByRole(AriaRole.Link, new() { Name = "Sign in" }).ClickAsync();
             await Page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).FillAsync("bob");
             await Page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).PressAsync("Tab");

@@ -6,12 +6,12 @@ namespace CarvedRock.End2End
     {
         public static string GetBaseUrl()
         {
-            return TestContext.Parameters.Get("BaseUrl", "https://localhost:7224");
+            return TestContext.Parameters["BaseUrl"]!;
         }
 
         public static string GetApiUrl()
         {
-            return TestContext.Parameters.Get("BaseUrl", "https://localhost:7213");
+            return TestContext.Parameters["ApiUrl"]!; 
         }
     }
 }
