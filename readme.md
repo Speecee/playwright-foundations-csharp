@@ -1,4 +1,4 @@
-# Playwright Foundations in C# / .NET
+# Playwright Foundations in C# / .NET Test
 
 ## Where are the Playwright tests?
 
