@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ main ]
 jobs:
-  test:
+  End2End-tests:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -14,12 +14,50 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
+        
+    - name: Check Docker
+      run: docker --version
+    - name: Restore
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+        
     - name: Build & Install
       working-directory: e2e
       run: dotnet build
     - name: Ensure browsers are installed
       working-directory: e2e
       run: pwsh CarvedRock.End2End/bin/Debug/net10.0/playwright.ps1 install --with-deps
+
+    - name: Start Aspire AppHost
+      run: |
+          dotnet run \
+            --project MyApplication.AppHost \
+            --configuration Release \
+            > aspire.log 2>&1 &
+
+          echo $! > aspire.pid
+
+    - name: Wait for application
+      shell: bash
+      run: |
+          echo "Waiting for Aspire application..."
+
+          for i in {1..60}; do
+
+            if curl -s http://localhost:5000 > /dev/null; then
+              echo "Application is ready"
+              exit 0
+            fi
+
+            echo "Waiting..."
+            sleep 2
+
+          done
+
+          echo "Application failed to start"
+          cat aspire.log
+          exit 1
     - name: Run your tests
       working-directory: e2e
       run: dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless=true
