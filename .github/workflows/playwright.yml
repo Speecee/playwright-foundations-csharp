@@ -32,7 +32,7 @@ jobs:
     - name: Start Aspire AppHost
       run: |
           dotnet run \
-            --project MyApplication.AppHost \
+            --project CarvedRock.AppHost \
             --configuration Release \
             > aspire.log 2>&1 &
 
