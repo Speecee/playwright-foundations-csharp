@@ -43,7 +43,7 @@ jobs:
       run: |
           echo "Waiting for Aspire application..."
 
-          for i in {1..120}; do
+          for i in {1..180}; do
 
             if curl -s http://localhost:7224 > /dev/null; then
               echo "Application is ready"
@@ -51,7 +51,7 @@ jobs:
             fi
 
             echo "Waiting..."
-            sleep 2
+            sleep 5
 
           done
 
